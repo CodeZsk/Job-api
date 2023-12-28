@@ -1,5 +1,5 @@
 const userModel  =require("../models/user.model")
-const registerController = async (req, res) => {
+const registerController = async (req, res,next) => {
   try {
     const { name, email, password } = req.body;
     //validate

@@ -1,17 +1,12 @@
 const mongoose=require("mongoose");
 const validator=require("validator");
 const bcrypt =require("bcryptjs");
-const JWT =require("jsonwebtoken")
+const JWT =require("jsonwebtoken");
 const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
       required: [true, "Name Is Require"],
-    },
-    phoneno:{
-        type:Number,
-        required: [true, "Phone Number Is Require"],
-        unique:true,
     },
     lastName: {
       type: String,
@@ -50,10 +45,10 @@ userSchema.methods.comparePassword = async function (userPassword) {
 
 //JSON WEBTOKEN
 userSchema.methods.createJWT = function () {
-  return JWT.sign({ userId: this._id }, process.env.JWT_SECRET, {
+  return JWT.sign({ userId: this._id }, process.env.JWT_KEY, {
     expiresIn: "1d",
   });
 };
 module.createJWT = mongoose.model("User", userSchema);
 
-module.exports=userSchema;
+module.exports=mongoose.model("User",userSchema);
