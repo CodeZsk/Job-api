@@ -1,4 +1,4 @@
-// import
+const authRoutes=require("./src/routes/authRoutes")
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
@@ -38,6 +38,7 @@ app.get("/api/v1/", (req, res) => {
 // app.use('/api/v1/movie', authMiddleware, movieRoute);
 // app.use('/api/v1/trailer', authMiddleware, trailerRoute);
 // app.use('/api/v1/circuit', authMiddleware, circuitRoute);
+app.use("/api/v1/auth",authRoutes);
 
 // error middlewares
 app.use(notFoundMiddleware);
