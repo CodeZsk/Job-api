@@ -1,7 +1,7 @@
-const mongoose=require("mongoose");
-const validator=require("validator");
-const bcrypt =require("bcryptjs");
-const JWT =require("jsonwebtoken");
+const mongoose = require("mongoose");
+const validator = require("validator");
+const bcrypt = require("bcryptjs");
+const JWT = require("jsonwebtoken");
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -51,4 +51,4 @@ userSchema.methods.createJWT = function () {
 };
 module.createJWT = mongoose.model("User", userSchema);
 
-module.exports=mongoose.model("User",userSchema);
+module.exports = mongoose.model("User", userSchema);
