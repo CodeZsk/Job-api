@@ -7,41 +7,144 @@ const { StatusCodes } = require("http-status-codes");
 
 // error
 const {
-  BadRequestError,
-  NotFound,
-  UnauthenticatedError,
+    BadRequestError,
+    NotFound,
+    UnauthenticatedError,
 } = require("../errors");
 
-const hello = async (req, res) => {
-  res.status(StatusCodes.OK).json({
-    success: true,
-    msg: "Successful",
-    data: "hello world! it's working",
-    nbHits: data.length,
-  });
-};
+function createUserController(req, res) {
+    const {
+        userId,
+        name,
+        email,
+        dob,
+        gender,
+        education,
+        degree,
+        isExperience,
+        yearExperience,
+        monthsExperience,
+        skills,
+    } = req.body;
 
-const updateUserController = async (req, res, next) => {
-  let { name, email, lastName, location } = req.body;
-  if (!name || !email || !lastName || !location) {
-    next("Please Provide All Fields");
-  }
-  const User = await userModel.findOne({ _id: req.user._id });
-  console.log(name);
-  name = User?.name;
-  lastName = User?.lastName;
-  email = User?.email;
-  location = User?.location;
+    const newUser = new User({
+        userId,
+        name,
+        email,
+        dob,
+        gender,
+        education,
+        degree,
+        isExperience,
+        yearExperience,
+        monthsExperience,
+        skills,
+    });
 
-  await User?.save();
-  const token = User?.createJWT();
-  res.status(200).json({
-    User,
-    token,
-  });
-};
+    newUser
+        .save()
+        .then((user) => {
+            res.status(StatusCodes.CREATED).json({
+                success: true,
+                msg: "User created successfully",
+                data: user,
+            });
+        })
+        .catch((error) => {
+            console.error(error);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                msg: "Error occurred while creating user",
+            });
+        });
+}
+
+function getUserByIdController(req, res) {
+    const userId = req.params.id; // Assuming the user ID is part of the request parameters
+
+    User.findById(userId)
+        .then((user) => {
+            if (!user) {
+                return res.status(StatusCodes.NOT_FOUND).json({
+                    success: false,
+                    msg: "User not found",
+                });
+            }
+
+            res.status(StatusCodes.OK).json({
+                success: true,
+                msg: "User retrieved successfully",
+                data: user,
+            });
+        })
+        .catch((error) => {
+            console.error(error);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                msg: "Error occurred while retrieving user",
+            });
+        });
+}
+
+function updateUserController(req, res) {
+    const userId = req.params.id;
+
+    const {
+        name,
+        email,
+        dob,
+        gender,
+        education,
+        degree,
+        isExperience,
+        yearExperience,
+        monthsExperience,
+        skills,
+    } = req.body;
+
+    User.findByIdAndUpdate(
+        userId,
+        {
+            $set: {
+                name,
+                email,
+                dob,
+                gender,
+                education,
+                degree,
+                isExperience,
+                yearExperience,
+                monthsExperience,
+                skills,
+            },
+        },
+        { new: true, runValidators: true }
+    )
+        .then((updatedUser) => {
+            if (!updatedUser) {
+                return res.status(StatusCodes.NOT_FOUND).json({
+                    success: false,
+                    msg: "User not found",
+                });
+            }
+
+            res.status(StatusCodes.OK).json({
+                success: true,
+                msg: "User updated successfully",
+                data: updatedUser,
+            });
+        })
+        .catch((error) => {
+            console.error(error);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                msg: "Error occurred while updating user",
+            });
+        });
+}
 
 module.exports = {
-  hello,
-  updateUserController,
+    createUserController,
+    getUserByIdController,
+    updateUserController,
 };

@@ -1,80 +1,90 @@
-const jobsModel = require("../models/job.model");
+const { StatusCodes } = require("http-status-codes");
+const Job = require("../models/job.model");
 
-const createJobController = async (req, res, next) => {
-  const { company, position } = req.body;
-  if (!company || !position) {
-    next("Please Provide All Fields");
-  }
-  req.body.createdBy = req.user.userId;
-  const job = await jobsModel.create(req.body);
-  res.status(201).json({ job });
-};
-const getAllJobsController = async (req, res, next) => {
-  const { status, workType, search, sort } = req.query;
-  //conditons for searching filters
-  const queryObject = {
-    createdBy: req.user.userId,
-  };
-  //logic filters
-  if (status && status !== "all") {
-    queryObject.status = status;
-  }
-  if (workType && workType !== "all") {
-    queryObject.workType = workType;
-  }
-  if (search) {
-    queryObject.position = { $regex: search, $options: "i" };
-  }
+function getAllJobController(req, res) {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
 
-  let queryResult = jobsModel.find(queryObject);
-
-  //sorting
-  if (sort === "latest") {
-    queryResult = queryResult.sort("-createdAt");
-  }
-  if (sort === "oldest") {
-    queryResult = queryResult.sort("createdAt");
-  }
-  if (sort === "a-z") {
-    queryResult = queryResult.sort("position");
-  }
-  if (sort === "z-a") {
-    queryResult = queryResult.sort("-position");
-  }
-  //pagination
-  const page = Number(req.query.page) || 1;
-  const limit = Number(req.query.limit) || 10;
-  const skip = (page - 1) * limit;
-
-  queryResult = queryResult.skip(skip).limit(limit);
-  //jobs count
-  const totalJobs = await jobsModel.countDocuments(queryResult);
-  const numOfPage = Math.ceil(totalJobs / limit);
-
-  const jobs = await queryResult;
-
-  // const jobs = await jobsModel.find({ createdBy: req.user.userId });
-  res.status(200).json({
-    totalJobs,
-    jobs,
-    numOfPage,
-  });
-};
-
-const deleteJobController = async (req, res, next) => {
-    const { id } = req.params;
-    //find job
-    const job = await jobsModel.findOne({ _id: id });
-    //validation
-    if (!job) {
-      next(`No Job Found With This ID ${id}`);
+    const filters = {};
+    if (req.query.department) {
+        filters.department = req.query.department;
     }
-    if (!req.user.userId === job.createdBy) {
-      next("Your Not Authorize to delete this job");
-      return;
+    if (req.query.salary) {
+        filters.minSalary = { $gte: req.query.salary };
     }
-    await job.deleteOne();
-    res.status(200).json({ message: "Success, Job Deleted!" });
-  };
+    if (req.query.workType) {
+        filters.workType = req.query.workType;
+    }
+    if (req.query.shift) {
+        filters.shift = req.query.shift;
+    }
+    if (req.query.jobDescription) {
+        filters.jobDescription = req.query.jobDescription;
+    }
+    if (req.query.status) {
+        filters.status = req.query.status;
+    }
 
-module.exports = { createJobController,getAllJobsController,deleteJobController };
+    const sortOptions = {};
+    if (req.query.sortBy) {
+        sortOptions[req.query.sortBy] = 1; // 1 for ascending order, -1 for descending
+    }
+
+    Job.find(filters)
+        .sort(sortOptions)
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .then((jobs) => {
+            return Job.countDocuments(filters).then((totalJobs) => {
+                const totalPages = Math.ceil(totalJobs / limit);
+
+                res.status(StatusCodes.OK).json({
+                    success: true,
+                    msg: "Successful",
+                    data: jobs,
+                    totalJobs,
+                    totalPages,
+                    currentPage: page,
+                });
+            });
+        })
+        .catch((error) => {
+            console.error(error);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                msg: "Error occurred",
+            });
+        });
+}
+
+function getJobByIdController(req, res) {
+    const jobId = req.params.id;
+
+    Job.findById(jobId)
+        .then((job) => {
+            if (!job) {
+                return res.status(StatusCodes.NOT_FOUND).json({
+                    success: false,
+                    msg: "Job not found",
+                });
+            }
+
+            res.status(StatusCodes.OK).json({
+                success: true,
+                msg: "Successful",
+                data: job,
+            });
+        })
+        .catch((error) => {
+            console.error(error);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                msg: "Error occurred",
+            });
+        });
+}
+
+module.exports = {
+    getAllJobController,
+    getJobByIdController,
+};

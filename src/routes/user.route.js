@@ -1,22 +1,16 @@
 const express = require("express");
 const router = express.Router();
 
-const updateUserController = require("../controllers/user.controller");
+//routes
 
-const authenticationMiddleware = require("../middlewares/auth.middleware");
-
-const { hello } = require("../controllers/user.controller");
-
-router.route("/").get(hello);
+const {
+    createUserController,
+    getUserByIdController,
+    updateUserController,
+} = require("../controllers/user.controller");
 
 //routes
-// GET USERS || GET
-
-// UPDATE USER || PUT
-router.put(
-  "/update-user",
-  authenticationMiddleware,
-  updateUserController.updateUserController
-);
+router.route("/").post(createUserController).patch(updateUserController);
+router.route("/:id").get(getUserByIdController);
 
 module.exports = router;

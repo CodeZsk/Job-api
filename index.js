@@ -1,6 +1,3 @@
-const authRoutes=require("./src/routes/authRoutes")
-const userRoutes=require("./src/routes/user.route")
-const jobsRoutes=require("./src/routes/jobRoutes")
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
@@ -16,6 +13,9 @@ const authMiddleware = require("./src/middlewares/auth.middleware");
 
 // Route
 // const userRoute = require("./src/routes/user.route")
+const authRoutes = require("./src/routes/authRoutes");
+const userRoutes = require("./src/routes/user.route");
+const jobsRoutes = require("./src/routes/jobRoutes");
 
 // app
 const app = express();
@@ -40,8 +40,8 @@ app.get("/api/v1/", (req, res) => {
 // app.use('/api/v1/movie', authMiddleware, movieRoute);
 // app.use('/api/v1/trailer', authMiddleware, trailerRoute);
 // app.use('/api/v1/circuit', authMiddleware, circuitRoute);
-app.use("/api/v1/auth",authRoutes);
-app.use("/api/v1/user",userRoutes);
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/user", userRoutes);
 
 app.use("/api/v1/job", jobsRoutes);
 

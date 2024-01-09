@@ -1,72 +1,30 @@
-const userModel = require("../models/user.model");
+const Auth = require("../models/auth.model");
 
-const registerController = async (req, res, next) => {
-  try {
-    const { name, email, password } = req.body;
-    //validate
-    if (!name) {
-      next("name is required");
-    }
-    if (!email) {
-      next("email is required");
-    }
-    if (!password) {
-      next("password is required and greater than 6 character");
-    }
-    const exisitingUser = await userModel.findOne({ email });
-    if (exisitingUser) {
-      next("Email Already Register Please Login");
-    }
-    const user = await userModel.create({ name, email, password });
-    //token
-    const token = user.createJWT();
-    res.status(201).send({
-      sucess: true,
-      message: "User Created Successfully",
-      user: {
-        name: user.name,
-        lastName: user.lastName,
-        email: user.email,
-        location: user.location,
-      },
-      token,
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(400).send({
-      message: "Error In Regristration",
-      success: false,
-      error,
-    });
-  }
-};
+const { StatusCodes } = require("http-status-codes");
+const { BadRequestError, NotFound } = require("../errors");
 
-const loginController = async (req, res, next) => {
-  const { email, password } = req.body;
-  //validation
-  if (!email || !password) {
-    next("Please Provide All Fields");
-  }
-  //find user by email
-  const user = await userModel.findOne({ email }).select("+password");
-  if (!user) {
-    next("Invalid Useraname or password");
-  }
+function authController(req, res) {
+    const phone = req.body.phoneNo;
 
-  //compare password
-  const isMatch = await user.comparePassword(password);
-  if (!isMatch) {
-    next("Invalid Useraname or password");
-  }
-  user.password = undefined;
-  const token = user.createJWT();
-  res.status(200).json({
-    success: true,
-    message: "Login SUccessfully",
-    user,
-    token,
-  });
-  
-};
+    const options = { upsert: true, new: true, setDefaultsOnInsert: true };
 
-module.exports = { registerController, loginController };
+    Auth.findOneAndUpdate({ phone: phone }, { phone: phone }, options)
+        .then((data) => {
+            console.log(data);
+            res.status(StatusCodes.OK).json({
+                success: true,
+                msg: "Successful",
+                data,
+                nbHits: data ? 1 : 0,
+            });
+        })
+        .catch((err) => {
+            console.error(err);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+                success: false,
+                msg: "Error occurred",
+            });
+        });
+}
+
+module.exports = { authController };

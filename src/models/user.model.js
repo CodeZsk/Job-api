@@ -1,54 +1,105 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
-const bcrypt = require("bcryptjs");
-const JWT = require("jsonwebtoken");
+// const bcrypt = require("bcryptjs");
+// const JWT = require("jsonwebtoken");
 const userSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: [true, "Name Is Require"],
+    {
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Auth",
+        },
+        name: {
+            type: String,
+            required: [true, "Name Is Require"],
+        },
+        email: {
+            type: String,
+            unique: true,
+            validate: validator.isEmail,
+        },
+        dob: {
+            type: Date,
+            required: [true, "Date of Birth is Required"],
+        },
+        gender: {
+            type: String,
+            enum: ["male", "female", "other"],
+            required: [true, "Gender is Required"],
+        },
+        education: {
+            type: String,
+            enum: [
+                "10th or below 10th",
+                "12th Pass",
+                "Diploma",
+                "ITI",
+                "Graduate",
+                "Post Graduate",
+            ],
+            required: [true, "Education is Required"],
+        },
+        degree: {
+            type: String,
+            required: [
+                function () {
+                    return [
+                        "Diploma",
+                        "ITI",
+                        "Graduate",
+                        "Post Graduate",
+                    ].includes(this.education);
+                },
+                "Degree is Required",
+            ],
+        },
+        isExperience: {
+            type: Boolean,
+            required: [true, "Exprerience is Required"],
+        },
+        yearExperience: {
+            type: String,
+            required: [
+                function () {
+                    return this.isExperience;
+                },
+                "Year is Required",
+            ],
+        },
+        monthsExperience: {
+            type: String,
+            required: false,
+        },
+        skills: {
+            type: [String], // Array of strings
+            validate: {
+                validator: function (value) {
+                    return value.length >= 4; // Minimum 4 skills required
+                },
+                message: "Minimum 4 skills are required",
+            },
+        },
     },
-    lastName: {
-      type: String,
-    },
-    email: {
-      type: String,
-      required: [true, " Email is Require"],
-      unique: true,
-      validate: validator.isEmail,
-    },
-    password: {
-      type: String,
-      required: [true, "password is require"],
-      minlength: [6, "Password length should be greater than 6 character"],
-      select: true,
-    },
-    location: {
-      type: String,
-      default: "India",
-    },
-  },
-  { timestamps: true }
+    { timestamps: true }
 );
-// middelwares
-userSchema.pre("save", async function () {
-  if (!this.isModified) return;
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-});
+// // middelwares
+// userSchema.pre("save", async function () {
+//     if (!this.isModified) return;
+//     const salt = await bcrypt.genSalt(10);
+//     this.password = await bcrypt.hash(this.password, salt);
+// });
 
-//compare password
-userSchema.methods.comparePassword = async function (userPassword) {
-  const isMatch = await bcrypt.compare(userPassword, this.password);
-  return isMatch;
-};
+// //compare password
+// userSchema.methods.comparePassword = async function (userPassword) {
+//     const isMatch = await bcrypt.compare(userPassword, this.password);
+//     return isMatch;
+// };
 
-//JSON WEBTOKEN
-userSchema.methods.createJWT = function () {
-  return JWT.sign({ userId: this._id }, process.env.JWT_KEY, {
-    expiresIn: "1d",
-  });
-};
-module.createJWT = mongoose.model("User", userSchema);
+// //JSON WEBTOKEN
+// userSchema.methods.createJWT = function () {
+//     return JWT.sign({ userId: this._id }, process.env.JWT_KEY, {
+//         expiresIn: "1d",
+//     });
+// };
+// module.createJWT = mongoose.model("User", userSchema);
 
 module.exports = mongoose.model("User", userSchema);
