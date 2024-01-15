@@ -15,8 +15,9 @@ function signInContorller(req, res) {
     // Check if the phone number exists in the database
     User.findOne({ phone: phone })
         .then((existingUser) => {
+            console.log("Useer: ", existingUser);
             if (!existingUser) {
-                res.status(StatusCodes.OK).json({
+                return res.status(StatusCodes.OK).json({
                     success: false,
                     msg: "New User",
                     token: false,
@@ -24,7 +25,7 @@ function signInContorller(req, res) {
             }
             // Phone number already exists, generate JWT token
             const token = generateToken(existingUser._id);
-            res.status(StatusCodes.OK).json({
+            return res.status(StatusCodes.OK).json({
                 success: true,
                 msg: "Login Successfully",
                 token: token,
@@ -82,10 +83,12 @@ function signUpController(req, res) {
                 newUser
                     .save()
                     .then((user) => {
+                        const token = generateToken(existingUser._id);
                         res.status(StatusCodes.CREATED).json({
                             success: true,
                             msg: "User created successfully",
                             data: user,
+                            token: token,
                         });
                     })
                     .catch((error) => {

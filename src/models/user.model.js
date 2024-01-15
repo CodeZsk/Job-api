@@ -15,11 +15,10 @@ const userSchema = new mongoose.Schema(
         },
         email: {
             type: String,
-            unique: true,
             validate: validator.isEmail,
         },
         dob: {
-            type: Date,
+            type: String,
             required: [true, "Date of Birth is Required"],
         },
         gender: {
