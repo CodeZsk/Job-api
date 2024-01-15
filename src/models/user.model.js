@@ -4,9 +4,10 @@ const validator = require("validator");
 // const JWT = require("jsonwebtoken");
 const userSchema = new mongoose.Schema(
     {
-        userId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Auth",
+        phone: {
+            type: String,
+            unique: true,
+            required: [true, "Phone Nummber Is Require"],
         },
         name: {
             type: String,
