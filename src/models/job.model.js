@@ -87,6 +87,14 @@ const jobSchema = new mongoose.Schema(
             required: [true, "Work location is required"],
         },
 
+        isurgent: {
+            type: Boolean,
+            default: false,
+        },
+        ishr: {
+            type: Boolean,
+            default: false,
+        },
         status: {
             type: String,
             enum: ["pending", "reject", "interview"],
