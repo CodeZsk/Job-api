@@ -1,112 +1,108 @@
 const User = require("../models/user.model");
 const jwt = require("jsonwebtoken");
+const { validationResult } = require("express-validator");
 
 const { StatusCodes } = require("http-status-codes");
 const { BadRequestError } = require("../errors");
 
-function signInContorller(req, res) {
-    const phone = req.body.phoneNo;
+async function signInContorller(req, res) {
+    try {
+        const phone = req.body.phoneNo;
 
-    // Validate phone number
-    if (!isValidPhoneNumber(phone)) {
-        throw new BadRequestError("Invalid phone number");
-    }
+        // Validate phone number
+        if (!isValidPhoneNumber(phone)) {
+            throw new BadRequestError("Invalid phone number");
+        }
 
-    // Check if the phone number exists in the database
-    User.findOne({ phone: phone })
-        .then((existingUser) => {
-            console.log("Useer: ", existingUser);
-            if (!existingUser) {
-                return res.status(StatusCodes.OK).json({
-                    success: false,
-                    msg: "New User",
-                    token: false,
-                });
-            }
-            // Phone number already exists, generate JWT token
-            const token = generateToken(existingUser._id);
+        // Check if the phone number exists in the database
+        const existingUser = await User.findOne({ phone });
+        if (!existingUser) {
             return res.status(StatusCodes.OK).json({
-                success: true,
-                msg: "Login Successfully",
-                token: token,
-            });
-        })
-        .catch((err) => {
-            console.error(err);
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
                 success: false,
-                msg: "Error occurred during phone number check",
+                msg: "New User",
+                token: false,
             });
+        }
+
+        // Phone number already exists, generate JWT token
+        const token = generateToken(existingUser._id);
+        return res.status(StatusCodes.OK).json({
+            success: true,
+            msg: "Login Successfully",
+            token: token,
         });
+    } catch (error) {
+        console.error("Error occurred during sign-in:", error);
+        return res
+            .status(StatusCodes.INTERNAL_SERVER_ERROR)
+            .json({ success: false, msg: "Error occurred during sign-in" });
+    }
 }
 
-function signUpController(req, res) {
-    const {
-        phone,
-        name,
-        email,
-        dob,
-        gender,
-        education,
-        degree,
-        isExperience,
-        yearExperience,
-        monthsExperience,
-        skills,
-    } = req.body;
+async function signUpController(req, res) {
+    try {
+        // Check for validation errors
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res
+                .status(StatusCodes.BAD_REQUEST)
+                .json({ errors: errors.array() });
+        }
 
-    // Check if the phone number already exists
-    User.findOne({ phone: phone })
-        .then((existingUser) => {
-            if (existingUser) {
-                // Phone number already exists
-                res.status(StatusCodes.CONFLICT).json({
-                    success: false,
-                    msg: "Phone number already exists",
-                });
-            } else {
-                // Phone number doesn't exist, create a new user
-                const newUser = new User({
-                    phone,
-                    name,
-                    email,
-                    dob,
-                    gender,
-                    education,
-                    degree,
-                    isExperience,
-                    yearExperience,
-                    monthsExperience,
-                    skills,
-                });
+        const {
+            phone,
+            name,
+            email,
+            dob,
+            gender,
+            education,
+            degree,
+            isExperience,
+            yearExperience,
+            monthsExperience,
+            skills,
+        } = req.body;
 
-                newUser
-                    .save()
-                    .then((user) => {
-                        const token = generateToken(existingUser._id);
-                        res.status(StatusCodes.CREATED).json({
-                            success: true,
-                            msg: "User created successfully",
-                            data: user,
-                            token: token,
-                        });
-                    })
-                    .catch((error) => {
-                        console.error(error);
-                        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-                            success: false,
-                            msg: "Error occurred while creating user",
-                        });
-                    });
-            }
-        })
-        .catch((error) => {
-            console.error(error);
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-                success: false,
-                msg: "Error occurred while checking phone number",
-            });
+        // Check if the phone number already exists
+        const existingUser = await User.findOne({ phone });
+        if (existingUser) {
+            return res
+                .status(StatusCodes.CONFLICT)
+                .json({ success: false, msg: "Phone number already exists" });
+        }
+
+        // Create a new user
+        const newUser = new User({
+            phone,
+            name,
+            email,
+            dob,
+            gender,
+            education,
+            degree,
+            isExperience,
+            yearExperience,
+            monthsExperience,
+            skills,
         });
+        await newUser.save();
+
+        // Generate token
+        const token = generateToken(newUser._id);
+
+        // Send success response
+        return res.status(StatusCodes.CREATED).json({
+            success: true,
+            msg: "User created successfully",
+            data: newUser,
+            token,
+        });
+    } catch (error) {
+        console.error("Error occurred while signing up:", error);
+        return res
+            .status(StatusCodes.INTERNAL_SERVER_ERROR)
+            .json({ success: false, msg: "Error occurred while signing up" });
+    }
 }
 
 function generateToken(userId) {

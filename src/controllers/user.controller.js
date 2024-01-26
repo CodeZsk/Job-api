@@ -5,146 +5,83 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const { StatusCodes } = require("http-status-codes");
 
-// error
-const {
-    BadRequestError,
-    NotFound,
-    UnauthenticatedError,
-} = require("../errors");
+async function getUserController(req, res) {
+    try {
+        const userId = req.user.userId;
 
-function createUserController(req, res) {
-    const {
-        userId,
-        name,
-        email,
-        dob,
-        gender,
-        education,
-        degree,
-        isExperience,
-        yearExperience,
-        monthsExperience,
-        skills,
-    } = req.body;
+        const user = await User.findById(userId);
 
-    const newUser = new User({
-        userId,
-        name,
-        email,
-        dob,
-        gender,
-        education,
-        degree,
-        isExperience,
-        yearExperience,
-        monthsExperience,
-        skills,
-    });
+        if (!user) {
+            return res
+                .status(StatusCodes.NOT_FOUND)
+                .json({ message: "User not found" });
+        }
 
-    newUser
-        .save()
-        .then((user) => {
-            res.status(StatusCodes.CREATED).json({
-                success: true,
-                msg: "User created successfully",
-                data: user,
-            });
-        })
-        .catch((error) => {
-            console.error(error);
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-                success: false,
-                msg: "Error occurred while creating user",
-            });
-        });
+        return res.status(StatusCodes.OK).json(user);
+    } catch (err) {
+        return res
+            .status(StatusCodes.INTERNAL_SERVER_ERROR)
+            .json({ message: err.message });
+    }
 }
 
-function getUserByIdController(req, res) {
-    const userId = req.params.id; // Assuming the user ID is part of the request parameters
+async function updateUserController(req, res) {
+    const userId = req.user.userId; // Assuming the user ID is passed in the request object
+    const updateFields = {
+        name: req.body.name,
+        dob: req.body.dob,
+        gender: req.body.gender,
+        education: req.body.education,
+        degree: req.body.degree,
+        isExperience: req.body.isExperience,
+        yearExperience: req.body.yearExperience,
+        monthsExperience: req.body.monthsExperience,
+        skills: req.body.skills,
+        email: req.body.email, // Always update email field, whether it's provided or not
+    };
 
-    User.findById(userId)
-        .then((user) => {
-            if (!user) {
-                return res.status(StatusCodes.NOT_FOUND).json({
-                    success: false,
-                    msg: "User not found",
-                });
+    try {
+        // Check if the new email is already taken
+        if (req.body.email) {
+            const existingUserWithEmail = await User.findOne({
+                email: req.body.email,
+            });
+            if (
+                existingUserWithEmail &&
+                existingUserWithEmail._id.toString() !== userId
+            ) {
+                return res
+                    .status(StatusCodes.CONFLICT)
+                    .json({ success: false, msg: "Email already exists" });
             }
+        }
 
-            res.status(StatusCodes.OK).json({
-                success: true,
-                msg: "User retrieved successfully",
-                data: user,
-            });
-        })
-        .catch((error) => {
-            console.error(error);
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-                success: false,
-                msg: "Error occurred while retrieving user",
-            });
+        // Update user
+        const updatedUser = await User.findByIdAndUpdate(userId, updateFields, {
+            new: true,
         });
-}
 
-function updateUserController(req, res) {
-    const userId = req.params.id;
+        if (!updatedUser) {
+            return res
+                .status(StatusCodes.NOT_FOUND)
+                .json({ success: false, msg: "User not found" });
+        }
 
-    const {
-        name,
-        email,
-        dob,
-        gender,
-        education,
-        degree,
-        isExperience,
-        yearExperience,
-        monthsExperience,
-        skills,
-    } = req.body;
-
-    User.findByIdAndUpdate(
-        userId,
-        {
-            $set: {
-                name,
-                email,
-                dob,
-                gender,
-                education,
-                degree,
-                isExperience,
-                yearExperience,
-                monthsExperience,
-                skills,
-            },
-        },
-        { new: true, runValidators: true }
-    )
-        .then((updatedUser) => {
-            if (!updatedUser) {
-                return res.status(StatusCodes.NOT_FOUND).json({
-                    success: false,
-                    msg: "User not found",
-                });
-            }
-
-            res.status(StatusCodes.OK).json({
-                success: true,
-                msg: "User updated successfully",
-                data: updatedUser,
-            });
-        })
-        .catch((error) => {
-            console.error(error);
-            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-                success: false,
-                msg: "Error occurred while updating user",
-            });
+        return res.status(StatusCodes.OK).json({
+            success: true,
+            msg: "User updated successfully",
+            data: updatedUser,
         });
+    } catch (error) {
+        console.error("Error occurred while updating user:", error);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            msg: "Error occurred while updating user",
+        });
+    }
 }
 
 module.exports = {
-    createUserController,
-    getUserByIdController,
+    getUserController,
     updateUserController,
 };

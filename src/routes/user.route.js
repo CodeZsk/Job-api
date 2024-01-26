@@ -4,13 +4,11 @@ const router = express.Router();
 //routes
 
 const {
-    createUserController,
-    getUserByIdController,
+    getUserController,
     updateUserController,
 } = require("../controllers/user.controller");
 
 //routes
-router.route("/").post(createUserController).patch(updateUserController);
-router.route("/:id").get(getUserByIdController);
+router.route("/").get(getUserController).patch(updateUserController);
 
 module.exports = router;
