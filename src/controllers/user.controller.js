@@ -5,6 +5,42 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const { StatusCodes } = require("http-status-codes");
 
+async function getAllUserController(req, res) {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+
+        const skip = (page - 1) * limit;
+
+        const users = await User.find().skip(skip).limit(limit);
+
+        const totalUsers = await User.countDocuments();
+
+        if (!users || users.length === 0) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                msg: "No users found",
+            });
+        }
+
+        const totalPages = Math.ceil(totalUsers / limit);
+
+        return res.status(StatusCodes.OK).json({
+            success: true,
+            msg: "Users retrieved successfully",
+            data: users,
+            currentPage: page,
+            totalPages: totalPages,
+        });
+    } catch (error) {
+        console.error("Error occurred while fetching users:", error);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            msg: "Error occurred",
+        });
+    }
+}
+
 async function getUserController(req, res) {
     try {
         const userId = req.user.userId;
@@ -82,6 +118,7 @@ async function updateUserController(req, res) {
 }
 
 module.exports = {
+    getAllUserController,
     getUserController,
     updateUserController,
 };
