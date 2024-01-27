@@ -117,8 +117,40 @@ async function updateUserController(req, res) {
     }
 }
 
+async function getUserByNameController(req, res) {
+    try {
+        const userName = req.query.name;
+        console.log("User name: " + userName);
+
+        // Case-insensitive search for users with similar names
+        const users = await User.find({
+            name: { $regex: new RegExp(userName, "i") },
+        });
+
+        if (!users || users.length === 0) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                success: false,
+                msg: "No users found with the provided name",
+            });
+        }
+
+        return res.status(StatusCodes.OK).json({
+            success: true,
+            msg: "Users retrieved successfully",
+            data: users,
+        });
+    } catch (error) {
+        console.error("Error occurred while fetching users by name:", error);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            success: false,
+            msg: "Error occurred",
+        });
+    }
+}
+
 module.exports = {
     getAllUserController,
     getUserController,
     updateUserController,
+    getUserByNameController,
 };

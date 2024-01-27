@@ -78,6 +78,27 @@ const userSchema = new mongoose.Schema(
                 message: "Minimum 4 skills are required",
             },
         },
+        engsplvl: {
+            type: String,
+        },
+        languages: {
+            type: [String],
+        },
+        empType: {
+            type: [String],
+        },
+        empWorkPlace: {
+            type: [String],
+        },
+        empShift: {
+            type: [String],
+        },
+        city: {
+            type: [String],
+        },
+        jobs: {
+            type: [String],
+        },
     },
     { timestamps: true }
 );

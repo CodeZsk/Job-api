@@ -7,6 +7,9 @@ async function getAllJobController(req, res) {
         const limit = parseInt(req.query.limit) || 10;
 
         const filters = {};
+        if (req.query.company) {
+            filters.company = req.query.company;
+        }
         if (req.query.department) {
             filters.department = req.query.department;
         }
