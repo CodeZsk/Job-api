@@ -61,6 +61,13 @@ async function signUpController(req, res) {
             yearExperience,
             monthsExperience,
             skills,
+            engsplvl,
+            languages,
+            empType,
+            empWorkPlace,
+            empShift,
+            city,
+            jobs,
         } = req.body;
 
         // Check if the phone number already exists
@@ -84,6 +91,13 @@ async function signUpController(req, res) {
             yearExperience,
             monthsExperience,
             skills,
+            engsplvl,
+            languages,
+            empType,
+            empWorkPlace,
+            empShift,
+            city,
+            jobs,
         });
         await newUser.save();
 
