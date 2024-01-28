@@ -10,9 +10,9 @@ async function signInContorller(req, res) {
         const phone = req.body.phoneNo;
 
         // Validate phone number
-        if (!isValidPhoneNumber(phone)) {
-            throw new BadRequestError("Invalid phone number");
-        }
+        // if (!isValidPhoneNumber(phone)) {
+        //     throw new BadRequestError("Invalid phone number");
+        // }
 
         // Check if the phone number exists in the database
         const existingUser = await User.findOne({ phone });
