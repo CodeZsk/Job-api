@@ -70,6 +70,8 @@ async function signUpController(req, res) {
             jobs,
         } = req.body;
 
+        console.log(req.body);
+
         // Check if the phone number already exists
         const existingUser = await User.findOne({ phone });
         if (existingUser) {
